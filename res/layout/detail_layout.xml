@@ -1,0 +1,51 @@
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="fill" >
+
+	        <TextView
+	            android:id="@+id/textViewTitle"
+	            android:layout_width="0dip"
+	            android:layout_height="wrap_content"
+	            android:textIsSelectable="false"
+	            android:layout_weight="1" />
+
+            <!--<Button
+                android:id="@+id/button_action"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_action" />
+
+            <Spinner
+                android:id="@+id/spinner_menu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />  -->
+
+            </LinearLayout>
+
+        <LinearLayout
+        	android:id="@+id/emblist"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >        
+        </LinearLayout>
+        
+        <!-- <FrameLayout
+            android:id="@+id/embedded"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:padding="6dp"
+            android:background="#ff303030"
+            android:gravity="top|center_horizontal" />
+ -->
+
+    </LinearLayout>
