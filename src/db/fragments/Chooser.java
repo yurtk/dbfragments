@@ -16,22 +16,30 @@
 package db.fragments;
 
 import android.content.Context;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
 /**
  * The chooser control.
  */
-public class Chooser extends Spinner implements Control {
+public class Chooser extends Spinner implements Control, OnItemSelectedListener {
+
+	private boolean changed = false;
+	private boolean changedBySetText = false;
 
 	public Chooser(Context context) {
 		super(context);
+		setOnItemSelectedListener(this);
 	}
 
 	public static Chooser newInstance(Context parent, String[] values) {
 		Chooser choose = new Chooser(parent);
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(parent,
 				android.R.layout.simple_spinner_item, values);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		choose.setAdapter(adapter);
 		return choose;
 	}
@@ -50,5 +58,26 @@ public class Chooser extends Spinner implements Control {
 			sel = 0;
 		}
 		setSelection(sel);
+		changed = false;
+		changedBySetText = true;
+	}
+
+	@Override
+	public boolean isChanged() {
+		return changed;
+	}
+
+	@Override
+	public void onItemSelected(AdapterView<?> parent, View view, int position,
+			long id) {
+		if (!changedBySetText) {
+			changed = true;
+		}
+		changedBySetText = false;
+	}
+
+	@Override
+	public void onNothingSelected(AdapterView<?> parent) {
+		changed = false;
 	}
 }

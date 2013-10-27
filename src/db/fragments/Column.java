@@ -19,11 +19,12 @@ import android.view.View;
 
 /**
  * This helper class defines a field of a database table and its UI properties.
- * <p/> 
+ * <p/>
  * Typical usage example:<br>
  * ArrayList<Column> columns = new ArrayList<Column>();<br>
  * columns.add(new Column().name("f_name").type(G.TEXT).title("Name");<br>
- * columns.add(new Column().name("f_price").type(G.REAL).title("Price").constr(G.IntZero));<br>
+ * columns.add(new
+ * Column().name("f_price").type(G.REAL).title("Price").constr(G.IntZero));<br>
  * <br>
  * Class member descriptors:<br>
  * <ul>
@@ -35,76 +36,78 @@ public class Column {
 	// Using Builder Design Pattern
 
 	/**
-	 *  This helper class describes left joined field like this:<br>
-	 *  new Column.Foreign().dbfragment("JoinedDBFragment")<br>
-	 *      .key_fld("id")<br>
-	 *      .str_fld("name")<br>
-	 *	
+	 * This helper class describes left joined field like this:<br>
+	 * new Column.Foreign().dbfragment("JoinedDBFragment")<br>
+	 * .key_fld("id")<br>
+	 * .str_fld("name")<br>
+	 * 
 	 */
 	public static class Foreign {
-		public DBFragment dbactivity = null;
-		public String key_fld = null;
-		public String str_fld = null;
+		public DBFragment dbfragment = null;
+		public String keyField = null;
+		public String showField = null;
 		public String[][] extra_keys = null;
-		public G.Lambda filter = null;
 
 		public Foreign() {
 		};
 
 		/**
-		 * DBFragment class name that corresponds 'LEFT JOIN table' in SQL 
+		 * DBFragment class name that corresponds 'LEFT JOIN table' in SQL
 		 * expression.
-		 * @param _dbfragment Class name
+		 * 
+		 * @param _dbfragment
+		 *            Class name
 		 * @return Foreign object with given class name
 		 */
 		public Foreign dbfragment(String _dbfragment) {
-			dbactivity = G.objects.get(_dbfragment);
+			dbfragment = G.objects.get(_dbfragment);
 			return this;
 		}
 
 		/**
-		 * Key field in DBFragment class that corresponds 'field2' in 
-		 * 'LEFT JOIN table ON field1 = field2' SQL expression.
-		 * @param _key_fld Key field name
+		 * Key field in DBFragment class that corresponds 'field2' in 'LEFT JOIN
+		 * table ON field1 = field2' SQL expression.
+		 * 
+		 * @param _key_fld
+		 *            Key field name
 		 * @return Foreign object with given key field name
 		 */
-		public Foreign key_fld(String _key_fld) {
-			key_fld = _key_fld;
+		public Foreign keyField(String _key_fld) {
+			keyField = _key_fld;
 			return this;
 		}
 
 		/**
-		 * The field of the TEXT type in DBFragment class that represents 
-		 * joined text with the table column defined in DBFragment's 
-		 * <i>columns</i> field.
-		 * @param _str_fld Text field name
+		 * The field of the TEXT type in DBFragment class that represents joined
+		 * text with the table column defined in DBFragment's <i>columns</i>
+		 * field.
+		 * 
+		 * @param _str_fld
+		 *            Text field name
 		 * @return Foreign object with given text field name
 		 */
-		public Foreign str_fld(String _str_fld) {
-			str_fld = _str_fld;
+		public Foreign showField(String _str_fld) {
+			showField = _str_fld;
 			return this;
 		}
 
 		/**
-		 * [Optional] If you have more than one field to join as defined in 
-		 * "key_fld", define the arrays of extra field names like this:<br> 
+		 * [Optional] If you have more than one field to join as defined in
+		 * "keyField", define the arrays of extra field names like this:<br>
 		 * new String[][] { { "this_dbfragment_field", "joined_field" }, }
-		 * @param _extra_keys Array of extra keys
+		 * 
+		 * @param _extra_keys
+		 *            Array of extra keys
 		 * @return Foreign object with given extra keys
 		 */
 		public Foreign extra_keys(String[][] _extra_keys) {
 			extra_keys = _extra_keys;
 			return this;
 		}
-
-		public Foreign filter(G.Lambda _filter) {
-			filter = _filter;
-			return this;
-		}
 	}
 
 	public String name = null;
-	public DataType type = null;
+	public DataType dataType = null;
 	public String title = null;
 	public G.Lambda readonly = null;
 	public G.Lambda defaultValue = null;
@@ -113,17 +116,33 @@ public class Column {
 	public Foreign foreign = null;
 	public G.Lambda filter = null;
 	public Boolean show = true;
+	public DBFragment dbfragment = null;
 
 	protected View l_ctrl = null;
 	protected Control e_ctrl = null;
 	protected Filter f_ctrl = null;
 
-	public Column() {
+	/**
+	 * Constructor
+	 * @param _dbfragment DBFragment object that this column belongs to.
+	 */
+	public Column(DBFragment _dbfragment) {
+		dbfragment = _dbfragment;
+	}
+	
+	/*
+	 * Check whether control linked to database field changed.
+	 * @return <i>true</i> or <i>false</i>
+	 */
+	public boolean isControlChanged() {
+		return e_ctrl.isChanged();
 	}
 
 	/**
 	 * [Mandatory] Set field name.
-	 * @param name The field name.
+	 * 
+	 * @param name
+	 *            The field name.
 	 * @return Column object with given name.
 	 */
 	public Column name(String name) {
@@ -132,19 +151,23 @@ public class Column {
 	}
 
 	/**
-	 * [Mandatory] Set field type (currently supported types: DATE, INTEGER, 
+	 * [Mandatory] Set field type (currently supported types: DATE, INTEGER,
 	 * REAL, TEXT, TIMESTAMP).
-	 * @param type The field type.
+	 * 
+	 * @param type
+	 *            The field type.
 	 * @return Column object with given type.
 	 */
-	public Column type(DataType type) {
-		this.type = type;
+	public Column dataType(DataType type) {
+		this.dataType = type;
 		return this;
 	}
 
 	/**
 	 * [Mandatory] Set column title.
-	 * @param title The column title.
+	 * 
+	 * @param title
+	 *            The column title.
 	 * @return Column object with given title.
 	 */
 	public Column title(String title) {
@@ -153,9 +176,11 @@ public class Column {
 	}
 
 	/**
-	 * [Optional] 'Lambda' function which returns <i>true</i> if this field need 
+	 * [Optional] 'Lambda' function which returns <i>true</i> if this field need
 	 * to be set as readonly.
-	 * @param readonly <i>G.Lambda</i> object with <i>getBool</i> function.
+	 * 
+	 * @param readonly
+	 *            <i>G.Lambda</i> object with <i>getBool</i> function.
 	 * @return Column object with given <i>readonly</i> function.
 	 */
 	public Column readonly(G.Lambda readonly) {
@@ -164,8 +189,10 @@ public class Column {
 	}
 
 	/**
-	 * [Optional] Set default value for the field. 
-	 * @param defaultValue Default value.
+	 * [Optional] Set default value for the field.
+	 * 
+	 * @param defaultValue
+	 *            Default value.
 	 * @return Column object with default value.
 	 */
 	public Column defaultValue(G.Lambda defaultValue) {
@@ -175,8 +202,10 @@ public class Column {
 
 	/**
 	 * [Optional] Array of strings which means that this field will be displayed
-	 * as a spinner control with values: {<i>value</i>, <i>displayed text</i>}. 
-	 * @param choose Choose values.
+	 * as a spinner control with values: {<i>value</i>, <i>displayed text</i>}.
+	 * 
+	 * @param choose
+	 *            Choose values.
 	 * @return Column object with choose values.
 	 */
 	public Column choose(String[] choose) {
@@ -190,8 +219,10 @@ public class Column {
 	}
 
 	/**
-	 * [Optional] Set current column as 'foreign'.
-	 * @param foreign The foreign object.
+	 * [Optional] Set current column as 'foreign'. Not compatible with other DBFragment than 'this'.
+	 * 
+	 * @param foreign
+	 *            The foreign object.
 	 * @return Column object with foreign feature.
 	 */
 	public Column foreign(Foreign foreign) {
@@ -200,15 +231,18 @@ public class Column {
 	}
 
 	/**
-	 * [Optional] 'Lambda' function that returns ArrayList<String> with two 
-	 * values: ('relational_operator', filter_value) where<br> 
-	 * 'relational_operator' is one of ["", "=", "<=", ">=", "<", ">", "like"];
-	 * <br> filter_value is a value the field is compared to.<br>
-	 * If <i>'filter'</i> is defined, it will also appear in filter dialog called by 
-	 * 'Filter' button on the application's top panel. If the filter function 
-	 * is defined, but return value is <i>null</i>, it will appear in the filter 
-	 * dialog with empty relational operator and conditional value.
-	 * @param filter <i>G.Lambda</i> object with <i>getArrayListOfString</i> function.
+	 * [Optional] 'Lambda' function that returns ArrayList<String> with two
+	 * values: ('relational_operator', filter_value) where<br>
+	 * 'relational_operator' is one of ["", "=", "<=", ">=", "<", ">", "like"]; <br>
+	 * filter_value is a value the field is compared to.<br>
+	 * If <i>'filter'</i> is defined, it will also appear in filter dialog
+	 * called by 'Filter' button on the application's top panel. If the filter
+	 * function is defined, but return value is <i>null</i>, it will appear in
+	 * the filter dialog with empty relational operator and conditional value.
+	 * 
+	 * @param filter
+	 *            <i>G.Lambda</i> object with <i>getArrayListOfString</i>
+	 *            function.
 	 * @return Column object with given <i>filter</i> function.
 	 */
 	public Column filter(G.Lambda filter) {
@@ -217,9 +251,11 @@ public class Column {
 	}
 
 	/**
-	 * [Optional] Set <i>true</i> to show the column (default), 
-	 * <i>false</i> to hide the column,
-	 * @param show Boolean value. 
+	 * [Optional] Set <i>true</i> to show the column (default), <i>false</i> to
+	 * hide the column,
+	 * 
+	 * @param show
+	 *            Boolean value.
 	 * @return Column object with foreign feature.
 	 */
 	public Column show(Boolean show) {

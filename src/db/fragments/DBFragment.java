@@ -16,10 +16,10 @@
 
 package db.fragments;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,19 +45,18 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
-import db.fragments.R;
 
 /**
- * The base class for building user defined classes which help to show and edit 
- * user's data. It consists of database table definition, database fields 
+ * The base class for building user defined classes which help to show and edit
+ * user's data. It consists of database table definition, database fields
  * definition and their GUI controls description.<br>
  * Class member descriptors:<br>
  * <ul>
- * <li>[Configuration] - this field is visible both in class definitions and 
- *  runtime</li>
+ * <li>[Configuration] - this field is visible both in class definitions and
+ * runtime</li>
  * <li>[Runtime] - runtime visible field</li>
- * <li>[Runtime readonly] - this runtime visible field will be private in future 
- *  and be accessed with getter</li>
+ * <li>[Runtime readonly] - this runtime visible field will be private in future
+ * and be accessed with getter</li>
  * </ul>
  */
 public abstract class DBFragment extends ListFragment {
@@ -67,8 +66,8 @@ public abstract class DBFragment extends ListFragment {
 	/**
 	 * [Configuration] The database table name.
 	 */
-	public String tablename = "";
-	
+	public String tableName = "";
+
 	/**
 	 * [Runtime readonly] SQL expression in use.
 	 */
@@ -78,35 +77,41 @@ public abstract class DBFragment extends ListFragment {
 	 * [Configuration] The title of activity for this DBFragment.
 	 */
 	public String title = "";
-	
+
+	/**
+	 * [Configuration] Joined dbfragments (tables) map. Joining keys are
+	 * described as a pair of column names.
+	 */
+	public Map<DBFragment, String[][]> joins = new LinkedHashMap<DBFragment, String[][]>();
+
 	/**
 	 * [Configuration] The list of column definitions.
 	 */
-	public List<Column> columns = new ArrayList<Column>();
+	public Columns columns = new Columns(this);
 
 	/**
-	 * [Configuration] 'Lambda' function that returns <i>true</i> if data in 
+	 * [Configuration] 'Lambda' function that returns <i>true</i> if data in
 	 * this class are readonly (default: <i>false</i>).
 	 */
 	public G.Lambda readonly = G.BooleanFalse;
-	
+
 	public G.Lambda editable = G.BooleanTrue;
 
 	/**
-	 * [Configuration] List of lists of strings, used to fill up database table 
+	 * [Configuration] List of lists of strings, used to fill up database table
 	 * directly after the table creation in G.renewstruc() function.
 	 */
 	public List<List<String>> initvalues = null;
 
 	/**
-	 * [Configuration] String array of two elements {<i>DBFragment_class</i>, 
-	 * <i>field_name_with_key_from_DBFragment_class</i>}. <i>'detail'</i> allows
-	 * binding of different DBFragments in master-detail way. The detail 
-	 * DBFragment will always be filtered by 
-	 * <i>'field_name_with_key_from_DBFragment_class</i> value which is currently 
-	 * selected in parent DBFragment.
+	 * [Configuration] String array of three elements {<i>DBFragment_class</i>,
+	 * <i>field_name_with_key_from_DBFragment_class</i>, <i>Title</i>}. 
+	 * <i>'details'</i> allows binding of different DBFragments in 
+	 * master-details way. The details DBFragment will always be filtered by
+	 * <i>'field_name_with_key_from_DBFragment_class</i> value which is
+	 * currently selected in parent DBFragment.
 	 */
-	public String[] detail;
+	public String[][] details;
 
 	/**
 	 * [Configuration] Database field name for total sum calculating.
@@ -114,54 +119,52 @@ public abstract class DBFragment extends ListFragment {
 	public String total = null;
 
 	/**
-	 * [Configuration] 'Lambda' function that returs array of 2-items array 
-	 * {<i>field_name</i>, <i>asc|desc</i>}, where <i>field_name</i> is a 
+	 * [Configuration] 'Lambda' function that returs array of 2-items array
+	 * {<i>field_name</i>, <i>asc|desc</i>}, where <i>field_name</i> is a
 	 * database table field name, <i>order_type</i> is either 'asc' or 'desc'.
 	 */
 	public String[][] orderby() {
 		return new String[][] { new String[] { "ROWID", "asc" } };
 	}
 
-	public DBFragment details;
-	
+	public DBFragment[] detailFragments;
+
 	/**
-	 * [Runtime readonly] Master frame of detail DBFragment instance in 
-	 * master-detail related frames.
+	 * [Runtime readonly] Master frame of details DBFragment instance in
+	 * master-details related frames.
 	 */
 	protected DBFragment masterform;
-	
+
 	protected String masterfield;
+	
+	/**
+	 * The list of filter arrays: {name, field, sign, value}
+	 */
 	public ArrayList<String[]> filter_lst;
 	protected FilterFragment _filter_dlg;
-	
+
 	/**
 	 * [Runtime readonly] Current row index in current DBFragment list view.
 	 */
 	protected int crow_gui = 0;
-	
+
 	/**
 	 * [Runtime readonly] Current row index (ROWID) in database table.
-	 */	
+	 */
 	public int crow_db = 0;
-
-	// Field index by field name
-	protected Map<String, Integer> fld = new HashMap<String, Integer>();
-
-	public Map<String, Integer> get_fld() {
-		return fld;
-	}
 
 	public SQLiteCursor cursor;
 	public SimpleCursorAdapter cursor_adapter;
 
 	/**
 	 * [Runtime readonly] EditFragment object for current DBFragment instance.
-	 */	
+	 */
 	public EditFragment editform;
-	
+
 	/**
-	 * [Runtime readonly] <i>true</i> if the current record is in editable state.
-	 */	
+	 * [Runtime readonly] <i>true</i> if the current record is in editable
+	 * state.
+	 */
 	public boolean crow_edit;
 
 	// Menu IDs
@@ -171,22 +174,23 @@ public abstract class DBFragment extends ListFragment {
 	public static final int ID_MENU_FILTER = 4;
 	public static final int ID_MENU_ADD = 5;
 	public static final int ID_MENU_DELETE = 6;
-	public static final int ID_MENU_DETAIL = 7;
-	public static final int ID_MENU_SEPARATOR = 8;
+	//public static final int ID_MENU_DETAIL = 7;
+	public static final int ID_MENU_SEPARATOR = 7;
 	// First element menu IDs
 	public static final int ID_MENU_MENU_FIRST = 100;
 	public static final int ID_MENU_ACTIONS_FIRST = 200;
-	public static final int ID_MENU_ACTIONS_LOCAL_FIRST = 300;
+	public static final int ID_MENU_DETAILS_FIRST = 300;
+	public static final int ID_MENU_ACTIONS_LOCAL_FIRST = 400;
 
 	// Menu enable/disable map by menu id
 	protected SparseBooleanArray menu_enabled = new SparseBooleanArray();
 
 	protected SimpleCursorAdapter.ViewBinder viewbinder = null;
-	public Map<String, String> actions = new HashMap<String, String>();
+	public Map<String, String> actions = new LinkedHashMap<String, String>();
 
 	// Fields shown in ListView
 	public String[] listfields;
-	
+
 	// Restore list selection helper variables
 	int restoreIndex, restoreTop;
 
@@ -204,8 +208,6 @@ public abstract class DBFragment extends ListFragment {
 		makeSql();
 
 		if (savedInstanceState != null) {
-			fld = (Map<String, Integer>) savedInstanceState
-					.getSerializable("fld");
 			filter_lst = (ArrayList<String[]>) savedInstanceState
 					.getSerializable("filter_lst");
 		}
@@ -226,29 +228,62 @@ public abstract class DBFragment extends ListFragment {
 	}
 
 	protected void makeSql() {
-		String s = String.format("SELECT %s.ROWID _id,", tablename);
+		String s = String.format("SELECT %s.ROWID _id,", tableName);
 		for (Column col : columns) {
+			if (columns.indexOf(col) == 0) {
+				continue;
+			}
 			if (col.foreign != null) {
-				s += String.format("%s.%s||' '||%s.%s %s,", tablename,
-						col.name, col.foreign.dbactivity.tablename,
-						col.foreign.str_fld, col.name);
+				s += String.format("%s.%s||' '||%s.%s %s,", tableName,
+						col.name, col.foreign.dbfragment.tableName,
+						col.foreign.showField, col.name);
+			} else if (!col.dbfragment.equals(this)) {
+				s += String.format("%s.%s %s,", col.dbfragment.tableName,
+						col.name, col.name);
 			} else {
-				s += String.format("%s.%s %s,", tablename, col.name, col.name);
+				s += String.format("%s.%s %s,", tableName, col.name, col.name);
 			}
 		}
 		s = s.substring(0, s.length() - 1); // remove trailing comma
-		s += String.format(" FROM %s", tablename);
+		s += String.format(" FROM %s", tableName);
 
-		// For 'foreign'
-		for (Column col : columns) {
-			if (col.foreign != null) {
-				s += String.format(" LEFT JOIN %s ON %s.%s=%s.%s",
-						col.foreign.dbactivity.tablename, tablename, col.name,
-						col.foreign.dbactivity.tablename, col.foreign.key_fld);
-				if (col.foreign.extra_keys != null) {
-					for (String[] ek : col.foreign.extra_keys) {
-						s += String.format(" AND %s.%s=%s.%s", tablename,
-								ek[0], col.foreign.dbactivity.tablename, ek[1]);
+		if (!joins.isEmpty()) {
+			// For joins
+			ArrayList<DBFragment> dbfs = new ArrayList<DBFragment>(
+					joins.keySet());
+			int dsize = dbfs.size();
+			for (int i = 0; i < dsize; i++) {
+				int pos = 0;
+				if (i == 0) {
+					s += String
+							.format(" LEFT JOIN %s ON %s.%s=%s.%s",
+									dbfs.get(i).tableName, tableName,
+									joins.get(dbfs.get(i))[0][0],
+									dbfs.get(i).tableName,
+									joins.get(dbfs.get(i))[0][1]);
+					pos = 1;
+				}
+				int jlength = joins.get(dbfs.get(i)).length;
+				for (int j = pos; j < jlength; j++) {
+					s += String
+							.format(" AND %s.%s=%s.%s", tableName,
+									joins.get(dbfs.get(i))[j][0],
+									dbfs.get(i).tableName,
+									joins.get(dbfs.get(i))[j][1]);
+				}
+			}
+		} else {
+			// For 'foreign'
+			for (Column col : columns) {
+				if (col.foreign != null) {
+					s += String.format(" LEFT JOIN %s ON %s.%s=%s.%s",
+							col.foreign.dbfragment.tableName, tableName, col.name,
+							col.foreign.dbfragment.tableName, col.foreign.keyField);
+					if (col.foreign.extra_keys != null) {
+						for (String[] ek : col.foreign.extra_keys) {
+							s += String.format(" AND %s.%s=%s.%s", tableName,
+									ek[0], col.foreign.dbfragment.tableName, ek[1]);
+						}
 					}
 				}
 			}
@@ -267,10 +302,6 @@ public abstract class DBFragment extends ListFragment {
 	 * Set initial values for the class members. Called from DBApplication
 	 */
 	protected void __init__() {
-		int i = 0;
-		for (Column col : columns) {
-			fld.put(col.name, ++i); // assume ROWID is the first column
-		}
 		filter_lst = new ArrayList<String[]>();
 		for (Column col : columns) {
 			if (col.filter != null) {
@@ -292,7 +323,7 @@ public abstract class DBFragment extends ListFragment {
 	/*
 	 * Public event handlers
 	 */
-	
+
 	/**
 	 * On confirm changes after data edit.
 	 */
@@ -323,31 +354,35 @@ public abstract class DBFragment extends ListFragment {
 
 	/**
 	 * Return map of <i>field name : value</i> pairs from selected row.
+	 * 
 	 * @return <i>field name : value</i> map
 	 */
 	public HashMap<String, String> get_selected_dict() {
 		HashMap<String, String> res = new HashMap<String, String>();
 		SQLiteCursor c = (SQLiteCursor) cursor_adapter.getCursor();
 		if (c.moveToPosition(crow_gui)) {
-			Set<String> fields = fld.keySet();
+			Set<String> fields = columns.keySet();
 			for (String f : fields) {
-				res.put(f, c.getString(fld.get(f)));
+				res.put(f, c.getString(columns.indexOf(f)));
 			}
 		}
 		return res;
 	}
 
 	/**
-	 * Search all records by field <i>by_field</i> for value <i>by_value</i> in 
-	 * dictionary <i>by_field_value_dict</i> {<i>by_field</i> : <i>by_value</i>} 
+	 * Search all records by field <i>by_field</i> for value <i>by_value</i> in
+	 * dictionary <i>by_field_value_dict</i> {<i>by_field</i> : <i>by_value</i>}
 	 * and returns found record value of field <i>get_field</i>
-	 * @param by_field_value_dict Map of strings {<i>by_field</i> : <i>by_value</i>}
-	 * @param get_field field name to get value
+	 * 
+	 * @param by_field_value_dict
+	 *            Map of strings {<i>by_field</i> : <i>by_value</i>}
+	 * @param get_field
+	 *            field name to get value
 	 * @return Found value.
 	 */
 	public String get_by_values(Map<String, String> by_field_value_dict,
 			String get_field) {
-		int fpos = fld.get(get_field);
+		int fpos = columns.indexOf(get_field);
 		String s = sql;
 		Set<String> fields = by_field_value_dict.keySet();
 		for (String k : fields) {
@@ -356,8 +391,7 @@ public abstract class DBFragment extends ListFragment {
 		Cursor c = cursor.getDatabase().rawQuery(s,
 				by_field_value_dict.values().toArray(new String[0]));
 		String res = null;
-		if (c.getCount() > 0) {
-			c.moveToFirst();
+		if (c.moveToFirst()) {
 			res = c.getString(fpos);
 		}
 		c.close();
@@ -365,22 +399,25 @@ public abstract class DBFragment extends ListFragment {
 	}
 
 	/**
-	 * Search all records by field <i>by_field</i> for value <i>by_value</i> and return
-	 * the found record value of the <i>get_field</i> field.
-	 * @param by_field field name to search
-	 * @param by_value value to search
-	 * @param get_field field name to get value
+	 * Search all records by field <i>by_field</i> for value <i>by_value</i> and
+	 * return the found record value of the <i>get_field</i> field.
+	 * 
+	 * @param by_field
+	 *            field name to search
+	 * @param by_value
+	 *            value to search
+	 * @param get_field
+	 *            field name to get value
 	 * @return Found value.
 	 */
 	public String get_by_value(String by_field, String by_value,
 			String get_field) {
 		String res = null;
-		int fpos = fld.get(get_field);
+		int fpos = columns.indexOf(get_field);
 		Cursor c = cursor.getDatabase().rawQuery(
-				String.format(sql + " and %s.%s = ?", tablename, by_field),
+				String.format(sql + " and %s.%s = ?", tableName, by_field),
 				new String[] { by_value });
-		if (c.getCount() > 0) {
-			c.moveToFirst();
+		if (c.moveToFirst()) {
 			res = c.getString(fpos);
 		}
 		c.close();
@@ -389,24 +426,24 @@ public abstract class DBFragment extends ListFragment {
 
 	/**
 	 * Returns value from selected table row for field name <field>
+	 * 
 	 * @param field
 	 * @return
 	 */
 	public String get_field_value(String field) {
 		String res = null;
-		int fpos = fld.get(field);
-		String s = String.format(sql + " and %s.ROWID = ?", tablename);
+		int fpos = columns.indexOf(field);
+		String s = String.format(sql + " and %s.ROWID = ?", tableName);
 
 		Cursor c = ((SQLiteCursor) cursor_adapter.getCursor()).getDatabase()
 				.rawQuery(s, new String[] { String.valueOf(crow_db) });
 
-		if (c.getCount() > 0) {
-			c.moveToFirst();
+		if (c.moveToFirst()) {
 			res = c.getString(fpos);
 		}
 		c.close();
 
-		Column col = columns.get(fpos - 1);
+		Column col = columns.get(fpos);
 		if (col.foreign != null && res != null) {
 			String[] tl = res.split(" ");
 			res = (tl.length == 0) ? "null" : tl[0];
@@ -421,7 +458,7 @@ public abstract class DBFragment extends ListFragment {
 	public void set_field_value(String field, String value) {
 		ContentValues vals = new ContentValues();
 		vals.put(field, value);
-		cursor.getDatabase().update(tablename, vals, "rowid=?",
+		cursor.getDatabase().update(tableName, vals, "rowid=?",
 				new String[] { String.valueOf(crow_db) });
 	}
 
@@ -437,14 +474,18 @@ public abstract class DBFragment extends ListFragment {
 	}
 
 	/**
-	 * Set the column dictionary parameter <i>par</i> to value <i>val</i> for 
+	 * Set the column dictionary parameter <i>par</i> to value <i>val</i> for
 	 * field <i>fname</i>.
-	 * @param fname field name
-	 * @param par column parameter name
-	 * @param val value to set
+	 * 
+	 * @param fname
+	 *            field name
+	 * @param par
+	 *            column parameter name
+	 * @param val
+	 *            value to set
 	 */
 	protected void setColumn(String fname, String par, Object val) {
-		Column col = columns.get(fld.get(fname) - 1);
+		Column col = columns.get(fname);
 		Field fld;
 		try {
 			fld = Column.class.getField(par);
@@ -459,13 +500,15 @@ public abstract class DBFragment extends ListFragment {
 	}
 
 	/**
-	 * Return value from EditFragment Control for field <i>fname</i>
-	 * @param fname field name.
-	 * @return Value from Control for given field name. 
+	 * Return value from EditFragment control for field <i>fname</i>
+	 * 
+	 * @param fname
+	 *            field name.
+	 * @return Value from Control for given field name.
 	 */
 	public String get_edit_value(String fname) {
 		String res = null;
-		Column col = columns.get(fld.get(fname) - 1);
+		Column col = columns.get(fname);
 		if (col.e_ctrl == null) {
 			return res;
 		}
@@ -478,17 +521,30 @@ public abstract class DBFragment extends ListFragment {
 	}
 
 	/**
+	 * Put value <i>val</i> into EditFragment control for field <i>fname</i>
+	 * 
+	 * @param fname
+	 *            field name.
+	 * @param val
+	 *            value.
+	 */
+	public void set_edit_value(String fname, String val) {
+		Column col = columns.get(fname);
+		col.e_ctrl.setText(val);
+	}
+
+	/**
 	 * Return list of values for ROWID=<i>id</i>
+	 * 
 	 * @param id
 	 * @return
 	 */
 	public ArrayList<String> get_values_by_id(int id) {
 		ArrayList<String> res = new ArrayList<String>();
-		String s = String.format(sql + " and %s.ROWID = ?", tablename);
+		String s = String.format(sql + " and %s.ROWID = ?", tableName);
 		Cursor cur = cursor.getDatabase().rawQuery(s,
 				new String[] { String.valueOf(id) });
-		if (cur.getCount() > 0) {
-			cur.moveToFirst();
+		if (cur.moveToFirst()) {
 			int cc = cur.getColumnCount();
 			for (int i = 0; i < cc; i++) {
 				res.add(cur.getString(i));
@@ -499,8 +555,9 @@ public abstract class DBFragment extends ListFragment {
 	}
 
 	/**
-	 * Returns master DBFragment object's current database table ROWID value from
-	 * detail DBFragment object
+	 * Returns master DBFragment object's current database table ROWID value
+	 * from detail DBFragment object
+	 * 
 	 * @return Currently selected ROWID of master table.
 	 */
 	public Integer get_master_key() {
@@ -511,9 +568,11 @@ public abstract class DBFragment extends ListFragment {
 	}
 
 	/**
-	 * Return master DBFragment object's field <i>fld</i> value from detail DBFragment
-	 * object.
-	 * @param fld Detail field name
+	 * Return master DBFragment object's field <i>fld</i> value from detail
+	 * DBFragment object.
+	 * 
+	 * @param fld
+	 *            Detail field name
 	 * @return Master field name
 	 */
 	public String get_master_field(String fld) {
@@ -533,37 +592,36 @@ public abstract class DBFragment extends ListFragment {
 		if (numRows == 0 || c.isClosed()) {
 			return;
 		}
-		/*if (!editable.getBool(this)) {
-			Toast toast = Toast.makeText(getActivity(),
-					G.lstr.get("Changes not allowed"), Toast.LENGTH_SHORT);
-			toast.show();
-			return;
-		}*/
 		c.moveToPosition(crow_gui);
 		String[] cval = new String[c.getColumnCount()];
 		cval[0] = c.getString(0);
 
 		// Update, if any control exists (prevents errors if calling from
-		// detail)
-		if (columns.get(0).e_ctrl != null) {
+		// details)
+		if (columns.get(1).e_ctrl != null) {
 			ContentValues vals = new ContentValues();
 			for (Column col : columns) {
-				if (col.type == G.INTEGER) {
-					v = col.e_ctrl.getText();
-					if (col.foreign != null) {
-						String[] tl = ((String) v).split(" ");
-						String itxt = (tl.length == 0) ? "null" : tl[0];
-						vals.put(col.name, itxt);
+				if (columns.indexOf(col) == 0) {
+					continue;
+				}
+				if (col.dbfragment.equals(this)) {
+					if (col.dataType == G.INTEGER) {
+						v = col.e_ctrl.getText();
+						if (col.foreign != null) {
+							String[] tl = ((String) v).split(" ");
+							String itxt = (tl.length == 0) ? "null" : tl[0];
+							vals.put(col.name, itxt);
+						} else {
+							vals.put(col.name, v.toString());
+						}
 					} else {
+						v = col.e_ctrl.getText();
 						vals.put(col.name, v.toString());
 					}
-				} else {
-					v = col.e_ctrl.getText();
-					vals.put(col.name, v.toString());
 				}
 			}
 			conn = c.getDatabase();
-			conn.update(tablename, vals, "rowid=?", new String[] { cval[0] });
+			conn.update(tableName, vals, "rowid=?", new String[] { cval[0] });
 		}
 
 		on_ok();
@@ -578,7 +636,7 @@ public abstract class DBFragment extends ListFragment {
 
 		menu_enabled.put(ID_MENU_ADD, editable.getBool(this));
 		menu_enabled.put(ID_MENU_DELETE, editable.getBool(this));
-		
+
 		_set_buttons_state();
 	}
 
@@ -586,19 +644,30 @@ public abstract class DBFragment extends ListFragment {
 		// Table columns as a comma separated string
 		String scol = "";
 		for (Column col : columns) {
-			scol += String.format("%s,", col.name);
+			if (columns.indexOf(col) == 0) {
+				continue;
+			}
+			if (col.dbfragment.equals(this)) {
+				scol += String.format("%s,", col.name);
+			}
 		}
 		scol = scol.substring(0, scol.length() - 1); // remove trailing comma
-		String s = String.format("insert into %s (%s) values (", tablename,
+		String s = String.format("insert into %s (%s) values (", tableName,
 				scol);
 		// Not supported in older SQLite versions
 		// String s = String.format("insert into %s default values (",
-		// tablename);
+		// tableName);
 		for (Column col : columns) {
-			if (col.defaultValue != null) {
-				s += String.format("'%s',", col.defaultValue.getString(this));
-			} else {
-				s += "null,";
+			if (columns.indexOf(col) == 0) {
+				continue;
+			}
+			if (col.dbfragment.equals(this)) {
+				if (col.defaultValue != null) {
+					s += String.format("'%s',",
+							col.defaultValue.getString(this));
+				} else {
+					s += "null,";
+				}
 			}
 		}
 		s = s.substring(0, s.length() - 1); // remove trailing comma
@@ -649,13 +718,15 @@ public abstract class DBFragment extends ListFragment {
 
 	private void doDelete() {
 		String s;
-		if (detail != null) {
-			s = String.format("delete from %s where %s=?",
-					G.objects.get(detail[0]).tablename, detail[1]);
-			cursor.getDatabase().execSQL(s,
-					new String[] { String.valueOf(crow_db) });
+		if (details != null) {
+			for (int i=0; i < details.length; i++) {
+				s = String.format("delete from %s where %s=?",
+						G.objects.get(details[i][0]).tableName, details[i][1]);
+				cursor.getDatabase().execSQL(s,
+						new String[] { String.valueOf(crow_db) });
+			}
 		}
-		s = String.format("delete from %s where ROWID=?", tablename);
+		s = String.format("delete from %s where ROWID=?", tableName);
 		cursor.getDatabase().execSQL(s,
 				new String[] { String.valueOf(crow_db) });
 		on_delete();
@@ -679,7 +750,8 @@ public abstract class DBFragment extends ListFragment {
 	}
 
 	/**
-	 * Refresh filters for master DBFragment object from detail DBFragment object.
+	 * Refresh filters for master DBFragment object from detail DBFragment
+	 * object.
 	 */
 	public void refresh_master_filter() {
 		filter_lst.clear();
@@ -695,19 +767,7 @@ public abstract class DBFragment extends ListFragment {
 		if (masterform != null) {
 			refresh_master_filter();
 		}
-		if (filter_lst.size() != 0) {
-			for (String[] f : filter_lst) {
-				if (f[2] != "" && f[3] != "") {
-					s += String.format(" and %s %s '%s'", f[1], f[2], f[3]);
-				}
-			}
-		}
-		s += " order by ";
-		for (String[] ordr : orderby()) {
-			s += String.format("%s.%s %s,", tablename, ordr[0], ordr[1]);
-		}
-		s = s.substring(0, s.length() - 1);
-		s += String.format(" limit %s", G.maxrows);
+		s = setFilterAndOrder(s);
 		if (cursor != null) {
 			cursor.close();
 		}
@@ -720,19 +780,57 @@ public abstract class DBFragment extends ListFragment {
 	}
 
 	/**
+	 * Set filter and order to existing DBFragment sql
+	 * 
+	 * @return SQL string with 'where' and 'order by' statements
+	 */
+	public String setFilterAndOrder(String s) {
+		String tn;
+		DBFragment foreignFragment;
+		if (filter_lst.size() != 0) {
+			for (String[] f : filter_lst) {
+				if (f[2] != "" && f[3] != "") {
+					s += String.format(" and %s %s '%s'", f[1], f[2], f[3]);
+				}
+			}
+		}
+		s += " order by ";
+		for (String[] ordr : orderby()) {
+			if (ordr[0] == "ROWID") {
+				foreignFragment = null;
+			} else {
+				foreignFragment = columns.get(ordr[0]).dbfragment;
+			}
+			if (foreignFragment != null) {
+				tn = foreignFragment.tableName;
+			} else {
+				tn = tableName;
+			}
+			s += String.format("%s.%s %s,", tn, ordr[0], ordr[1]);
+		}
+		s = s.substring(0, s.length() - 1);
+		s += String.format(" limit %s", G.maxrows);
+		return s;
+	}
+
+	/**
 	 * Return sum of values for the field <i>fld_name</i> as string.
-	 * @param fld_name Field name to calculate
-	 * @param format if <i>format</i> is <i>true</i> then the result value will 
-	 * be left-justified.
-	 * @param refresh if <i>refresh</i> is <i>true</i> then master DBFragment 
-	 * will be refreshed.
+	 * 
+	 * @param fld_name
+	 *            Field name to calculate
+	 * @param format
+	 *            if <i>format</i> is <i>true</i> then the result value will be
+	 *            left-justified.
+	 * @param refresh
+	 *            if <i>refresh</i> is <i>true</i> then master DBFragment will
+	 *            be refreshed.
 	 * @return Sum of values for the field <i>fld_name</i>
 	 */
 	public String sum_col(String fld_name, Boolean format, Boolean refresh) {
 		String res = "0";
 		if (refresh && masterform != null)
 			refresh_master_filter();
-		String s = String.format("select sum(%s) from %s", fld_name, tablename);
+		String s = String.format("select sum(%s) from %s", fld_name, tableName);
 		if (filter_lst.size() != 0) {
 			s += " where 1=1";
 			for (String[] f : filter_lst) {
@@ -742,8 +840,7 @@ public abstract class DBFragment extends ListFragment {
 			}
 		}
 		Cursor cur = cursor.getDatabase().rawQuery(s, null);
-		if (cur.getCount() > 0) {
-			cur.moveToFirst();
+		if (cur.moveToFirst()) {
 			res = cur.getString(0);
 			res = (res == null || res.equals("")) ? "0" : res;
 		}
@@ -772,14 +869,14 @@ public abstract class DBFragment extends ListFragment {
 			fro = !_master_check();
 		}
 		boolean cec = editable.getBool(this);
-        menu_enabled.put(ID_MENU_ADD, !fro);
+		menu_enabled.put(ID_MENU_ADD, !fro);
 		menu_enabled.put(ID_MENU_DELETE, !fro && cec);
 		if (masterform != null) {
 			((DetailActivity) getActivity()).invalidateOptionsMenu();
 		} else {
 			((MainActivity) getActivity()).invalidateOptionsMenu();
 		}
-		
+
 	}
 
 	@Override
@@ -787,7 +884,7 @@ public abstract class DBFragment extends ListFragment {
 		super.onActivityCreated(savedInstanceState);
 
 		refresh_data();
-		
+
 		// Default adapter parameters
 		int adaptLayout = R.layout.simple_list_item_checkable_2;
 		int[] adaptTo = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -800,7 +897,12 @@ public abstract class DBFragment extends ListFragment {
 			adaptTo = new int[] { R.id.text1, R.id.text2, R.id.text3 };
 		} else if (listfields.length == 4) {
 			adaptLayout = R.layout.simple_list_item_checkable_1and3;
-			adaptTo = new int[] { R.id.text1, R.id.text2, R.id.text3, R.id.text4 };
+			adaptTo = new int[] { R.id.text1, R.id.text2, R.id.text3,
+					R.id.text4 };
+		} else if (listfields.length == 5) {
+			adaptLayout = R.layout.simple_list_item_checkable_1and4;
+			adaptTo = new int[] { R.id.text1, R.id.text2, R.id.text3,
+					R.id.text4, R.id.text5 };
 		}
 
 		cursor_adapter = new SimpleCursorAdapter(getActivity(), adaptLayout,
@@ -823,8 +925,7 @@ public abstract class DBFragment extends ListFragment {
 			// Restore last state for checked position.
 			lastsel = savedInstanceState.getInt("curChoice", 0);
 			Cursor c = cursor_adapter.getCursor();
-			if (c.getCount() > 0) {
-				c.moveToPosition(lastsel);
+			if (c.moveToPosition(lastsel)) {
 				crow_gui = lastsel;
 				crow_db = c.getInt(0);
 			}
@@ -844,7 +945,7 @@ public abstract class DBFragment extends ListFragment {
 		registerForContextMenu(getListView());
 		_set_buttons_state();
 	}
-	
+
 	@Override
 	public void onStart() {
 		super.onStart();
@@ -857,7 +958,6 @@ public abstract class DBFragment extends ListFragment {
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putInt("curChoice", lastsel);
-		outState.putSerializable("fld", (Serializable) fld);
 		outState.putSerializable("filter_lst", filter_lst);
 	}
 
@@ -892,12 +992,11 @@ public abstract class DBFragment extends ListFragment {
 			getListView().setItemChecked(index, true);
 
 			// Check what fragment is currently shown, replace if needed.
-			editform = (EditFragment) getFragmentManager()
-					.findFragmentByTag(className + "_d");
-			
+			editform = (EditFragment) getFragmentManager().findFragmentByTag(
+					className + "_d");
+
 			Cursor c = cursor_adapter.getCursor();
-			if (c.getCount() > 0) {
-				c.moveToPosition(crow_gui);
+			if (c.moveToPosition(crow_gui)) {
 				crow_db = c.getInt(0);
 			} else {
 				crow_gui = 0;
@@ -935,13 +1034,17 @@ public abstract class DBFragment extends ListFragment {
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
-		
-		if (detail != null) {
-			menu.add(0, DBFragment.ID_MENU_DETAIL, Menu.NONE,
-					G.lstr.get("Detail"));
+
+		int idOffset = DBFragment.ID_MENU_DETAILS_FIRST;
+		if (details != null) {
+			for (int i=0; i < details.length; i++) {
+				menu.add(0, idOffset++, Menu.NONE, details[i][2]);
+			}
+			/*menu.add(0, DBFragment.ID_MENU_DETAIL, Menu.NONE,
+					G.lstr.get("Detail"));*/
 		}
 
-		int idOffset = DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST;
+		idOffset = DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST;
 		if (actions != null) {
 			for (String title : actions.values()) {
 				menu.add(0, idOffset++, Menu.NONE, title);
@@ -959,10 +1062,10 @@ public abstract class DBFragment extends ListFragment {
 		Intent intent;
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item
 				.getMenuInfo();
-		
+
 		if (mDualPane) {
 			showDetails(info.position);
-		} else {		
+		} else {
 			Cursor c = cursor_adapter.getCursor();
 			c.moveToPosition(info.position);
 			crow_gui = info.position;
@@ -970,24 +1073,37 @@ public abstract class DBFragment extends ListFragment {
 		}
 		int id = item.getItemId();
 		switch (id) {
-		case DBFragment.ID_MENU_DETAIL:
+		/*case DBFragment.ID_MENU_DETAIL:
 			intent = new Intent();
 			intent.setClass(getActivity(), DetailActivity.class);
 			CheckableFrameLayout cfl = ((CheckableFrameLayout) info.targetView);
 			TextView tv = ((TextView) cfl.getChildAt(0));
-			intent.putExtra("className", this.details.getClass()
+			intent.putExtra("className", this.detailFragments.getClass()
 					.getSimpleName());
 			intent.putExtra("parentClassName", this.getClass().getSimpleName());
 			intent.putExtra("rowtitle", tv.getText());
 			startActivity(intent);
-			return true;
+			return true;*/
 		case DBFragment.ID_MENU_SEPARATOR:
 			return false;
 		case DBFragment.ID_MENU_DELETE:
 			_on_delete();
 			return true;
 		default:
-			if (id >= DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST) {
+			if (id >= DBFragment.ID_MENU_DETAILS_FIRST && id < DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST) {
+				int indx = id - DBFragment.ID_MENU_DETAILS_FIRST;
+				intent = new Intent();
+				intent.setClass(getActivity(), DetailActivity.class);
+				CheckableFrameLayout cfl = ((CheckableFrameLayout) info.targetView);
+				TextView tv = ((TextView) cfl.getChildAt(0));
+				intent.putExtra("className", this.detailFragments[indx].getClass()
+						.getSimpleName());
+				intent.putExtra("parentClassName", this.getClass().getSimpleName());
+				intent.putExtra("rowtitle", tv.getText());
+				startActivity(intent);
+				return true;
+			}
+			else if (id >= DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST) {
 				int idOffset = DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST;
 				intent = new Intent();
 				String className = (String) actions.keySet().toArray()[id

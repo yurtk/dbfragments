@@ -78,6 +78,9 @@ public class EditFragment extends Fragment {
 
 		boolean is_choose, is_readonly;
 		for (Column col : dbfragment.columns) {
+			if (dbfragment.columns.indexOf(col) == 0) {
+				continue;
+			}
 			TextView label = new TextView(currContext);
 			label.setText(col.title);
 			col.l_ctrl = label;
@@ -87,7 +90,9 @@ public class EditFragment extends Fragment {
 				is_choose = true;
 			if (col.readonly != null)
 				is_readonly = col.readonly.getBool(dbfragment);
-			if (col.type == G.INTEGER) {
+			if (!col.dbfragment.equals(dbfragment))
+				is_readonly = true;
+			if (col.dataType == G.INTEGER) {
 				if (col.foreign != null) {
 					col.e_ctrl = Foreign.newInstance(currContext, false,
 							col.foreign, dbfragment);
@@ -105,12 +110,12 @@ public class EditFragment extends Fragment {
 						((TextView) col.e_ctrl).setSelectAllOnFocus(true);
 					}
 				}
-			} else if (col.type == G.REAL) {
+			} else if (col.dataType == G.REAL) {
 				col.e_ctrl = new Edit(currContext);
 				((Edit) col.e_ctrl).setInputType(InputType.TYPE_CLASS_NUMBER
 						| InputType.TYPE_NUMBER_FLAG_DECIMAL);
 				col.e_ctrl.setEnabled(is_readonly);
-			} else if (col.type == G.DATE) {
+			} else if (col.dataType == G.DATE) {
 				col.e_ctrl = new DateChooser(currContext);
 				col.e_ctrl.setEnabled(is_readonly);
 			} else { // col["type"] in (TEXT, TIMESTAMP)
@@ -179,11 +184,15 @@ public class EditFragment extends Fragment {
 		boolean is_readonly;
 		int i = 0;
 		for (Column col : dbfragment.columns) {
+			if (dbfragment.columns.indexOf(col) == 0) {
+				continue;
+			}
 			e_ctrl = col.e_ctrl;
 			is_readonly = false;
-			if (col.readonly != null) {
+			if (col.readonly != null)
 				is_readonly = col.readonly.getBool(dbfragment);
-			}
+			if (!col.dbfragment.equals(dbfragment))
+				is_readonly = true;
 			cval = c.getString(++i);
 			e_ctrl.setText(cval);
 			e_ctrl.setEnabled(!is_readonly);

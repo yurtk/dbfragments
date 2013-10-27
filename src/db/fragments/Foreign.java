@@ -43,6 +43,9 @@ public class Foreign extends LinearLayout implements Control,
 	Column.Foreign foreign;
 	Activity activity;
 	DBFragment parentFragment = null;
+	private boolean changed = false;
+
+	// private boolean changedBySetText = false;
 
 	public Foreign(Context context) {
 		super(context);
@@ -90,10 +93,9 @@ public class Foreign extends LinearLayout implements Control,
 		@SuppressLint("CommitTransaction")
 		public void onClick(View v) {
 			DBFragment fdbfragment = _dialog.dbfragment;
-			if (foreign.filter != null) {
-			}
 
-			_dialog.search_column_number = fdbfragment.fld.get(foreign.key_fld);
+			_dialog.search_column_number = fdbfragment.columns
+					.indexOf(foreign.keyField);
 			_dialog.search_column_value = keyid.toString();
 
 			_dialog.parentFragment = parentFragment;
@@ -102,7 +104,7 @@ public class Foreign extends LinearLayout implements Control,
 					.beginTransaction();
 
 			_dialog.show(ft, "listdialog");
-			//ft.commit();
+			// ft.commit();
 		}
 	};
 
@@ -110,10 +112,11 @@ public class Foreign extends LinearLayout implements Control,
 	public void onLstItemSelected(ArrayList<String> selection) {// list dialog
 																// fragment
 																// interface
-		DBFragment fdba = foreign.dbactivity;
-		int key_pos = fdba.fld.get(foreign.key_fld);
-		int str_pos = fdba.fld.get(foreign.str_fld);
+		DBFragment fdba = foreign.dbfragment;
+		int key_pos = fdba.columns.indexOf(foreign.keyField);
+		int str_pos = fdba.columns.indexOf(foreign.showField);
 		edit.setText(selection.get(key_pos) + " " + selection.get(str_pos));
+		changed = true;
 	}
 
 	@Override
@@ -133,5 +136,12 @@ public class Foreign extends LinearLayout implements Control,
 		edit.setText(text);
 		keyid = (itxt.equals("null") || itxt.equals("")) ? 0 : Long
 				.parseLong(itxt);
+		changed = false;
+		// changedBySetText = true;
+	}
+
+	@Override
+	public boolean isChanged() {
+		return changed;
 	}
 }

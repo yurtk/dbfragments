@@ -27,7 +27,7 @@ import android.widget.TextView;
 import db.fragments.R;
 
 /**
- * If DBFragment.detail is not null, the DetailActivity implements detail view.
+ * If DBFragment.details is not null, the DetailActivity implements details view.
  */
 public class DetailActivity extends Activity {
 
@@ -52,7 +52,7 @@ public class DetailActivity extends Activity {
 		viewTitle.setText(rowTitle);
 		this.setTitle(current_fragment.title);
 
-		set_master_detail(parent, current_fragment, parent.detail[1]);
+		set_master_detail(parent, current_fragment); // , parent.details[1]);
 
 		if (savedInstanceState != null) {
 			lastOrientation = savedInstanceState.getInt("lastOrientation");
@@ -72,12 +72,16 @@ public class DetailActivity extends Activity {
 		}
 	}
 
-	private void set_master_detail(DBFragment master, DBFragment detail,
-			String field) {
+	private void set_master_detail(DBFragment master, DBFragment detail) {
+			//String field) 
 		detail.masterform = master;
-		detail.masterfield = field;
+		for (int i=0; i < master.details.length; i++) {
+			if (master.details[i][2].equals(oname)) {
+				detail.masterfield = master.details[i][1];
+			}
+		}
 		// Master table ROWID as default value for details
-		detail.setColumn(field, "defaultValue", new G.Lambda() {
+		detail.setColumn(detail.masterfield, "defaultValue", new G.Lambda() {
 			public String getString(DBFragment self) {
 				return self.get_master_key().toString();
 			}

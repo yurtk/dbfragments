@@ -51,14 +51,15 @@ public class MainActivity extends Activity {
 		}
 		for (String oName : G.initorder) {
 			DBFragment m = G.objects.get(oName);
-			if (m.detail != null) {
-				DBFragment d = G.objects.get(m.detail[0]);
-				String f = m.detail[1];
-				set_master_detail(m, d, f);
-				d.makeSql();
-				d.refresh_data();
+			if (m.details != null) {
+				DBFragment[] d = new DBFragment[m.details.length];
+				String[] f = new String[m.details.length];
+				for (int i = 0; i < m.details.length; i++) {
+					d[i] = G.objects.get(m.details[i][0]);
+					f[i] = m.details[i][1];
+				}
+				set_master_details(m, d, f);
 			}
-
 			if (G.menuorder.contains(oName)) {
 				m.makeSql();
 				m.refresh_data();
@@ -101,23 +102,27 @@ public class MainActivity extends Activity {
 
 	}
 
-	private void set_master_detail(DBFragment master, DBFragment detail,
-			String field) {
-		master.details = detail;
-		detail.masterform = master;
-		detail.masterfield = field;
-		// Master table ROWID as default value for details
-		detail.setColumn(field, "defaultValue", new G.Lambda() {
-			public int getInt(DBFragment self) {
-				return self.get_master_key();
-			}
-		});
-		detail.filter_lst.add(new String[] { "detail", field, "=",
-				Long.toString(master.crow_db) });
-		detail.menu_enabled.put(DBFragment.ID_MENU_FILTER, false);
-		boolean is_master = detail._master_check();
-		detail.menu_enabled.put(DBFragment.ID_MENU_ADD, is_master);
-		detail.menu_enabled.put(DBFragment.ID_MENU_DELETE, is_master);
+	private void set_master_details(DBFragment master, DBFragment[] details,
+			String[] fields) {
+		master.detailFragments = details;
+		for (int i = 0; i < details.length; i++) {
+			details[i].masterform = master;
+			details[i].masterfield = fields[i];
+			// Master table ROWID as default value for details
+			details[i].setColumn(fields[i], "defaultValue", new G.Lambda() {
+				public int getInt(DBFragment self) {
+					return self.get_master_key();
+				}
+			});
+			details[i].filter_lst.add(new String[] { "detail", fields[i], "=",
+					Long.toString(master.crow_db) });
+			details[i].menu_enabled.put(DBFragment.ID_MENU_FILTER, false);
+			boolean is_master = details[i]._master_check();
+			details[i].menu_enabled.put(DBFragment.ID_MENU_ADD, is_master);
+			details[i].menu_enabled.put(DBFragment.ID_MENU_DELETE, is_master);
+			details[i].makeSql();
+			details[i].refresh_data();
+		}
 	}
 
 	@Override
@@ -164,10 +169,15 @@ public class MainActivity extends Activity {
 				MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
 		if (lastOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-			if (current_fragment.detail != null) {
-				menu.add(5, DBFragment.ID_MENU_DETAIL, Menu.NONE,
+			if (current_fragment.details != null) {
+				id = DBFragment.ID_MENU_DETAILS_FIRST;
+				for (int i = 0; i < current_fragment.details.length; i++) {
+					menu.add(5, id++, Menu.NONE, current_fragment.details[i][2])
+							.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+				}
+				/*menu.add(5, DBFragment.ID_MENU_DETAIL, Menu.NONE,
 						G.lstr.get("Detail")).setShowAsAction(
-						MenuItem.SHOW_AS_ACTION_IF_ROOM);
+						MenuItem.SHOW_AS_ACTION_IF_ROOM);*/
 			}
 
 			if (current_fragment.actions != null) {
@@ -265,8 +275,9 @@ public class MainActivity extends Activity {
 		} else if (id == DBFragment.ID_MENU_ADD) {
 			// New record
 			current_fragment._on_add();
-		} else if (id == DBFragment.ID_MENU_DETAIL) {
+		} else if (id >= DBFragment.ID_MENU_DETAILS_FIRST && id < DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST) {
 			// Details
+			int indx = id - DBFragment.ID_MENU_DETAILS_FIRST;
 			Intent intent = new Intent();
 			intent.setClass(this, DetailActivity.class);
 			Cursor c = current_fragment.cursor_adapter.getCursor();
@@ -277,7 +288,7 @@ public class MainActivity extends Activity {
 			} else {
 				return false;
 			}
-			intent.putExtra("className", current_fragment.details.getClass()
+			intent.putExtra("className", current_fragment.detailFragments[indx].getClass()
 					.getSimpleName());
 			intent.putExtra("parentClassName", current_fragment.getClass()
 					.getSimpleName());

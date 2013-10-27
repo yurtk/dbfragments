@@ -49,11 +49,12 @@ public class Filter extends LinearLayout {
 		f.combo = new Spinner(parent);
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(parent,
 				android.R.layout.simple_spinner_item, choices);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		f.combo.setAdapter(adapter);
 
 		boolean is_choose = (col.choose != null) ? true : false;
 
-		if (col.type == G.INTEGER) {
+		if (col.dataType == G.INTEGER) {
 			if (col.foreign != null) {
 				f.e_ctrl = Foreign.newInstance(parent, false, col.foreign);
 			} else {
@@ -65,11 +66,11 @@ public class Filter extends LinearLayout {
 							.setRawInputType(InputType.TYPE_CLASS_NUMBER);
 				}
 			}
-		} else if (col.type == G.REAL) {
+		} else if (col.dataType == G.REAL) {
 			f.e_ctrl = new Edit(parent);
 			((TextView) f.e_ctrl).setRawInputType(InputType.TYPE_CLASS_NUMBER
 					| InputType.TYPE_NUMBER_FLAG_DECIMAL);
-		} else if (col.type == G.DATE) {
+		} else if (col.dataType == G.DATE) {
 			f.e_ctrl = new DateChooser(parent);
 		} else
 			f.e_ctrl = new Edit(parent);
@@ -101,9 +102,9 @@ public class Filter extends LinearLayout {
 		if (e_ctrl instanceof Foreign) {
 			((Foreign) e_ctrl).setText(flst[3]
 					+ " "
-					+ ((Foreign) e_ctrl).foreign.dbactivity.get_by_value(
-							((Foreign) e_ctrl).foreign.key_fld, flst[3],
-							((Foreign) e_ctrl).foreign.str_fld));
+					+ ((Foreign) e_ctrl).foreign.dbfragment.get_by_value(
+							((Foreign) e_ctrl).foreign.keyField, flst[3],
+							((Foreign) e_ctrl).foreign.showField));
 		} else {
 			e_ctrl.setText(flst[3]);
 		}

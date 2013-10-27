@@ -32,7 +32,7 @@ Clean up the content of AndroidManifest.xml and put this XML code into it:
 	
 	    <uses-sdk
 	        android:minSdkVersion="11"
-	        android:targetSdkVersion="17" />
+	        android:targetSdkVersion="18" />
 	    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 	
 	
@@ -106,22 +106,23 @@ Create *Products* class to describe database table structure:
      * This class creates tb_products table with fields f_code_prod, f_name,
      * f_price.
      */
-    public class Products extends DBFragment {
+        public class Products extends DBFragment {
     
     	public Products() {
-    		tablename = "tb_products";
+    		tableName = "tb_products";
     		title = "Products";
     
-    		columns.add(new Column().name("f_code_prod").type(G.INTEGER)
+    		columns.add(new Column(this).name("f_code_prod").dataType(G.INTEGER)
     				.title("Code"));
-    		columns.add(new Column().name("f_name").type(G.TEXT).title("Name"));
-    		columns.add(new Column().name("f_price").type(G.REAL)
+    		columns.add(new Column(this).name("f_name").dataType(G.TEXT)
+    				.title("Name"));
+    		columns.add(new Column(this).name("f_price").dataType(G.REAL)
     				.title("Price").constr(G.IntZero));
-    		
+    
     		listfields = new String[] { "f_code_prod", "f_name", "f_price" };
     	}
-    
-    }    
+
+    }
 
 Notice that DBFragments has been ported from DBFrames Python framework, so it uses public non-static and non-final fields in its classes for porting convenience (so far).
         

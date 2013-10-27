@@ -1,21 +1,20 @@
 package com.mycompany.saleorders;
 
-import java.util.ArrayList;
-
 import db.fragments.Column;
+import db.fragments.Columns;
 import db.fragments.DBFragment;
 import db.fragments.G;
 
 public class Outlets extends DBFragment {
 
 	public Outlets() {
-		tablename = "tb_outlets";
+		tableName = "tb_outlets";
 		title = "Outlets";
 
-		columns = new ArrayList<Column>();
-		columns.add(new Column().name("f_code_id").type(G.INTEGER)
+		columns = new Columns(this);
+		columns.add(new Column(this).name("f_code_id").dataType(G.INTEGER)
 				.title("Code").defaultValue(G.StringZero));
-		columns.add(new Column().name("f_name").type(G.TEXT).title("Name"));
+		columns.add(new Column(this).name("f_name").dataType(G.TEXT).title("Name"));
 
 		listfields = new String[] { "f_code_id", "f_name" };
 

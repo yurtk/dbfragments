@@ -34,8 +34,8 @@ public class DialogItemsFragment extends DialogFragment {
 	public static DialogItemsFragment newInstance(onDlgListClick cb,
 			Column.Foreign foreign) {
 		DialogItemsFragment lstFrag = new DialogItemsFragment();
-		lstFrag.dbfragment = foreign.dbactivity;
-		lstFrag.title = foreign.dbactivity.title;// the title of the list
+		lstFrag.dbfragment = foreign.dbfragment;
+		lstFrag.title = foreign.dbfragment.title;// the title of the list
 		lstFrag.extra_keys = foreign.extra_keys;
 
 		lstFrag.mCallback = cb;
@@ -67,8 +67,10 @@ public class DialogItemsFragment extends DialogFragment {
 	}
 
 	/**
-	 * Fill the fragment with data. This metod is called automatically during creation of the fragment object.
-	 * @param search_column_number if <i>search_column_number</i> defined, the row selector will be positioned on row with index <i>search_column_value</i>
+	 * Fill the fragment with data. This metod is called automatically during 
+	 * creation of the fragment object.
+	 * @param search_column_number if <i>search_column_number</i> defined, 
+	 * the row selector will be positioned on row with index <i>search_column_value</i>
 	 * @param search_column_value search this value to set selected position 
 	 */
 	public void fill_with_data(Integer search_column_number,
@@ -79,15 +81,16 @@ public class DialogItemsFragment extends DialogFragment {
 		id_list = new ArrayList<Integer>();
 
 		String row_text;
-		items_list.clear();
-
+		//items_list.clear();
+		
 		String s = dbfragment.sql;
 		if (extra_keys != null) {
 			for (String[] ek : extra_keys) {
-				s += String.format(" AND %s.%s='%s'", dbfragment.tablename,
+				s += String.format(" AND %s.%s='%s'", dbfragment.tableName,
 						ek[1], parentFragment.get_edit_value(ek[0]));
 			}
 		}
+		s = dbfragment.setFilterAndOrder(s);
 		Cursor c = G.conn.rawQuery(s, null);
 
 		c.moveToFirst();

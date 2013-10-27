@@ -22,7 +22,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
-import db.fragments.R;
 
 /**
  * Activity class for DBAction.

@@ -17,6 +17,7 @@ package db.fragments;
 
 import android.content.Context;
 import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.EditText;
 
 /**
@@ -24,8 +25,31 @@ import android.widget.EditText;
  */
 public class Edit extends EditText implements Control {
 
+	private boolean changed = false;
+	private boolean changedBySetText = false;
+
+	private TextWatcher textWatcher = new TextWatcher() {
+
+		public void afterTextChanged(Editable s) {
+			changed = changedBySetText ? false: true;
+			changedBySetText = false;
+			//changed = isInputMethodTarget() ? true : false;
+		}
+
+		public void beforeTextChanged(CharSequence s, int start, int count,
+				int after) {
+		}
+
+		public void onTextChanged(CharSequence s, int start, int before,
+				int count) {
+
+		}
+	};
+
 	public Edit(Context context) {
 		super(context);
+		// setImeOptions(EditorInfo.IME_ACTION_DONE);
+		addTextChangedListener(textWatcher);
 	}
 
 	@Override
@@ -36,6 +60,12 @@ public class Edit extends EditText implements Control {
 	@Override
 	public void setText(CharSequence text, BufferType type) {
 		super.setText(text, type);
+		changedBySetText = true;
+	}
+
+	@Override
+	public boolean isChanged() {
+		return changed;
 	}
 
 }

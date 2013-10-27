@@ -15,11 +15,11 @@
  */
 package db.fragments;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -29,7 +29,7 @@ import android.view.MenuItem;
  */
 public class EditActivity extends Activity {
 
-	EditFragment details;
+	EditFragment edfragment;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,11 +41,11 @@ public class EditActivity extends Activity {
 		}
 
 		if (savedInstanceState == null) {
-			// During initial setup plug in the details fragment.
-			details = new EditFragment();
-			details.setArguments(getIntent().getExtras());
+			// During initial setup plug in the edfragment fragment.
+			edfragment = new EditFragment();
+			edfragment.setArguments(getIntent().getExtras());
 			getFragmentManager().beginTransaction()
-					.add(android.R.id.content, details).commit();
+					.add(android.R.id.content, edfragment).commit();
 		}
 	}
 
@@ -56,15 +56,19 @@ public class EditActivity extends Activity {
 			finish();
 			return false;
 		}
-		DBFragment dbfragment = details.dbfragment;
-		setTitle(details.dbfragment.title);
+		DBFragment dbfragment = edfragment.dbfragment;
+		setTitle(edfragment.dbfragment.title);
 
-		if (dbfragment.detail != null) {
-			menu.add(0, DBFragment.ID_MENU_DETAIL, Menu.NONE,
-					G.lstr.get("Detail"));
+		int idOffset = DBFragment.ID_MENU_DETAILS_FIRST;
+		if (dbfragment.details != null) {
+			for (int i=0; i < dbfragment.details.length; i++) {
+				menu.add(0, idOffset++, Menu.NONE, dbfragment.details[i][2]);
+			}
+			/*menu.add(0, DBFragment.ID_MENU_DETAIL, Menu.NONE,
+					G.lstr.get("Detail"));*/
 		}
 
-		int idOffset = DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST;
+		idOffset = DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST;
 		if (dbfragment.actions != null) {
 			for (String title : dbfragment.actions.values()) {
 				menu.add(0, idOffset++, Menu.NONE, title);
@@ -72,6 +76,10 @@ public class EditActivity extends Activity {
 		}
 
 		menu.add(0, DBFragment.ID_MENU_DELETE, Menu.NONE, G.lstr.get("Delete"));
+
+		MenuItem menuItem = menu.findItem(DBFragment.ID_MENU_DELETE);
+		menuItem.setEnabled(dbfragment.menu_enabled
+				.get(DBFragment.ID_MENU_DELETE));
 
 		int ms = menu.size();
 		for (int i = 0; i < ms; i++) {
@@ -84,37 +92,54 @@ public class EditActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		Intent intent;
-		DBFragment dbfragment = details.dbfragment;
+		DBFragment dbfragment = edfragment.dbfragment;
 
 		if (dbfragment != null && !dbfragment.readonly.getBool(dbfragment)
-				&& details.editable && dbfragment.crow_edit) {
+				&& edfragment.editable && dbfragment.crow_edit) {
 			dbfragment._on_ok();
 		}
 
 		int id = item.getItemId();
 		switch (id) {
-		case DBFragment.ID_MENU_DETAIL:
+		/*case DBFragment.ID_MENU_DETAIL:
 
 			Cursor c = dbfragment.cursor_adapter.getCursor();
 			c.moveToPosition(dbfragment.crow_gui);
-			String title = c.getString(dbfragment.fld
-					.get(dbfragment.listfields[0]));
+			String title = c.getString(dbfragment.columns
+					.indexOf(dbfragment.listfields[0]));
 
 			intent = new Intent();
 			intent.setClass(dbfragment.getActivity(), DetailActivity.class);
-			intent.putExtra("className", dbfragment.details.getClass()
+			intent.putExtra("className", dbfragment.detailFragments.getClass()
 					.getSimpleName());
 			intent.putExtra("parentClassName", dbfragment.getClass()
 					.getSimpleName());
 			intent.putExtra("rowtitle", title);
 			startActivity(intent);
-			return true;
+			return true;*/
 		case DBFragment.ID_MENU_DELETE:
 			dbfragment._on_delete();
 			this.finish();
 			return true;
 		default:
-			if (id >= DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST) {
+			if (id >= DBFragment.ID_MENU_DETAILS_FIRST && id < DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST) {
+				int indx = id - DBFragment.ID_MENU_DETAILS_FIRST;
+				Cursor c = dbfragment.cursor_adapter.getCursor();
+				c.moveToPosition(dbfragment.crow_gui);
+				String title = c.getString(dbfragment.columns
+						.indexOf(dbfragment.listfields[0]));
+
+				intent = new Intent();
+				intent.setClass(dbfragment.getActivity(), DetailActivity.class);
+				intent.putExtra("className", dbfragment.detailFragments[indx].getClass()
+						.getSimpleName());
+				intent.putExtra("parentClassName", dbfragment.getClass()
+						.getSimpleName());
+				intent.putExtra("rowtitle", title);
+				startActivity(intent);
+				return true;
+			}
+			else if (id >= DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST) {
 				int idOffset = DBFragment.ID_MENU_ACTIONS_LOCAL_FIRST;
 				intent = new Intent();
 				String className = (String) dbfragment.actions.keySet()

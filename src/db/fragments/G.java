@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,38 +32,38 @@ import android.database.sqlite.SQLiteDatabase;
  * The global class. It contains various static variables.<br>
  * Class member descriptors:<br>
  * <ul>
- * <li>[Configuration] - this field is visible both in class definitions and 
- *  runtime</li>
+ * <li>[Configuration] - this field is visible both in class definitions and
+ * runtime</li>
  * <li>[Runtime] - runtime visible field</li>
- * <li>[Runtime readonly] - this runtime visible field will be private in future 
- *  and be accessed with getter</li>
+ * <li>[Runtime readonly] - this runtime visible field will be private in future
+ * and be accessed with getter</li>
  * </ul>
  */
 public class G {
 
 	/**
-	 *  DBFragments' date data type
+	 * DBFragments' date data type
 	 */
 	public static final DataType DATE = new DataType("DATE", Date.class);
-	
+
 	/**
-	 *  DBFragments' integer data type
+	 * DBFragments' integer data type
 	 */
 	public static final DataType INTEGER = new DataType("INTEGER",
 			Integer.class);
-	
+
 	/**
-	 *  DBFragments' real data type
+	 * DBFragments' real data type
 	 */
 	public static final DataType REAL = new DataType("REAL", Double.class);
-	
+
 	/**
-	 *  DBFragments' text data type
+	 * DBFragments' text data type
 	 */
 	public static final DataType TEXT = new DataType("TEXT", String.class);
-	
+
 	/**
-	 *  DBFragments' timestamp data type
+	 * DBFragments' timestamp data type
 	 */
 	public static final DataType TIMESTAMP = new DataType("TIMESTAMP",
 			Date.class);
@@ -71,64 +72,64 @@ public class G {
 	 * [Configuration] SQLite database file name, default 'dbfile.db'.
 	 */
 	public static String dbfilename = "dbfile.db";
-	
+
 	/**
 	 * [Runtime readonly] Sqlite connection object.
 	 */
 	public static SQLiteDatabase conn;
-	
+
 	/**
-	 * [Configuration] Maximal number of rows listed in tables, default 
-	 * -1 (no limits).
+	 * [Configuration] Maximal number of rows listed in tables, default -1 (no
+	 * limits).
 	 */
 	public static int maxrows = -1;
-	
+
 	/**
 	 * [Runtime readonly] Application frames map.
 	 */
 	public static Map<String, DBFragment> objects = new HashMap<String, DBFragment>();
-	
+
 	/**
-	 * [Configuration] Application objects in the initialization order. 
-	 * 'Parameters' like objects always must be first. Objects joined as 
-	 * 'foreign' to other objects must be initialized first than the objects 
+	 * [Configuration] Application objects in the initialization order.
+	 * 'Parameters' like objects always must be first. Objects joined as
+	 * 'foreign' to other objects must be initialized first than the objects
 	 * they joined to.
 	 */
 	public static List<String> initorder = new ArrayList<String>();
-	
+
 	/**
-	 * [Configuration] Application objects in menu order. 
+	 * [Configuration] Application objects in menu order.
 	 */
 	public static List<String> menuorder = new ArrayList<String>();
-	
+
 	/**
-	 * [Configuration] Title and message strings dictionary for 
-	 * localization purposes. 
+	 * [Configuration] Title and message strings dictionary for localization
+	 * purposes.
 	 */
 	public static Map<String, String> lstr = new HashMap<String, String>();
-	
+
 	/**
 	 * Application's package name.
 	 */
 	public static String packname = null;
-	
+
 	/**
 	 * If true, database file is on SD card.
 	 */
 	public static boolean externalDatabaseFile = false;
 
 	/**
-	 * [Configuration] 'Action' is the non-DBFragments fragment which 
-	 * allows to implement any functionality you need and will be put in 
-	 * 'Actions' application menu. 
+	 * [Configuration] 'Action' is the non-DBFragments fragment which allows to
+	 * implement any functionality you need and will be put in 'Actions'
+	 * application menu.
 	 */
-	public static Map<String, String> actions = new HashMap<String, String>();
-	
+	public static Map<String, String> actions = new LinkedHashMap<String, String>();
+
 	/**
 	 * [Runtime] Restart application flag.
 	 */
 	public static boolean app_restart = true;
-	
+
 	/**
 	 * [Configuration] The application parameters.
 	 */
@@ -162,7 +163,7 @@ public class G {
 	// Most common functions
 
 	/**
-	 *  Return boolean value 'true'
+	 * Return boolean value 'true'
 	 */
 	public static Lambda BooleanTrue = new Lambda() {
 		public boolean getBool(DBFragment f) {
@@ -171,7 +172,7 @@ public class G {
 	};
 
 	/**
-	 *  Return boolean value 'false'
+	 * Return boolean value 'false'
 	 */
 	public static Lambda BooleanFalse = new Lambda() {
 		public boolean getBool(DBFragment f) {
@@ -180,7 +181,7 @@ public class G {
 	};
 
 	/**
-	 *  Return integer value 0
+	 * Return integer value 0
 	 */
 	public static Lambda IntZero = new Lambda() {
 		public int getInt(DBFragment self) {
@@ -189,7 +190,7 @@ public class G {
 	};
 
 	/**
-	 *  Return empty string
+	 * Return empty string
 	 */
 	public static Lambda StringEmpty = new Lambda() {
 		public String getString(DBFragment self) {
@@ -198,7 +199,7 @@ public class G {
 	};
 
 	/**
-	 *  Return string "0"
+	 * Return string "0"
 	 */
 	public static Lambda StringZero = new Lambda() {
 		public String getString(DBFragment self) {
@@ -207,7 +208,7 @@ public class G {
 	};
 
 	/**
-	 *  Return string "DEFAULT 0"
+	 * Return string "DEFAULT 0"
 	 */
 	public static Lambda StringDefaultZero = new G.Lambda() {
 		public String getString(DBFragment self) {
@@ -216,7 +217,7 @@ public class G {
 	};
 
 	/**
-	 *  Return ArrayList null value
+	 * Return ArrayList null value
 	 */
 	public static Lambda ArrayListNull = new G.Lambda() {
 		public ArrayList<String> getArrayListOfString(DBFragment self) {
@@ -238,7 +239,7 @@ public class G {
 		lstr.put("Menu", "Menu");
 		lstr.put("Add", "Add");
 		lstr.put("Delete", "Delete");
-		lstr.put("Detail", "Detail");
+		//lstr.put("Detail", "Detail");
 		lstr.put("Sum: ", "Sum: ");
 		lstr.put("Please wait...", "Please wait...");
 		lstr.put("Yes", "Yes");
@@ -263,14 +264,14 @@ public class G {
 		}
 
 		G.app_restart = false;
-		
+
 		if (externalDatabaseFile) {
 			try {
 				// Try to use database file on sdcard
-				DBApplication.getAppContext().getExternalFilesDir(null).mkdirs();
-				String dbPath = DBApplication.getAppContext().getExternalFilesDir(
-						null)
-						+ "/" + dbfilename;
+				DBApplication.getAppContext().getExternalFilesDir(null)
+						.mkdirs();
+				String dbPath = DBApplication.getAppContext()
+						.getExternalFilesDir(null) + "/" + dbfilename;
 				conn = SQLiteDatabase.openDatabase(dbPath, null,
 						SQLiteDatabase.CREATE_IF_NECESSARY);
 			} catch (Exception e) {
@@ -279,7 +280,7 @@ public class G {
 						DBApplication.getAppContext(), dbfilename, null, 1);
 				conn = dbHelper.getWritableDatabase();
 			}
-			
+
 		} else {
 			DatabaseHelper dbHelper = new DatabaseHelper(
 					DBApplication.getAppContext(), dbfilename, null, 1);
@@ -289,7 +290,9 @@ public class G {
 
 	/**
 	 * Get class object by its name.
-	 * @param className String with class name.
+	 * 
+	 * @param className
+	 *            String with class name.
 	 * @return Class object.
 	 */
 	public static Class<?> getClassByName(String className) {
@@ -304,7 +307,9 @@ public class G {
 
 	/**
 	 * Get ISO day of the week number
-	 * @param d Date
+	 * 
+	 * @param d
+	 *            Date
 	 * @return Week day number
 	 */
 	public static int isoWeekDay(Date d) {
@@ -331,26 +336,34 @@ public class G {
 		ContentValues cv = new ContentValues();
 		for (String oName : initorder) {
 			o = objects.get(oName);
-			if (!tt.contains(o.tablename)) {
-				s = String.format("CREATE TABLE %s (", o.tablename);
+			if (!tt.contains(o.tableName)) {
+				s = String.format("CREATE TABLE %s (", o.tableName);
 				for (Column col : o.columns) {
-					s += String.format(" %s %s", col.name, col.type.sql);
-					if (col.constr != null)
-						s += " " + col.constr.getString(o);
-					s += ",";
+					if (o.columns.indexOf(col) == 0) {
+						continue;
+					}
+					if (col.dbfragment.equals(o)) {
+						s += String
+								.format(" %s %s", col.name, col.dataType.sql);
+						if (col.constr != null)
+							s += " " + col.constr.getString(o);
+						s += ",";
+					}
 				}
 				s = s.substring(0, s.length() - 1) + ")";
 				conn.execSQL(s);
-				s = String.format("SELECT ROWID FROM %s LIMIT 1", o.tablename);
+				s = String.format("SELECT ROWID FROM %s LIMIT 1", o.tableName);
 				c = conn.rawQuery(s, null);
 				if (c.getCount() == 0 && o.initvalues != null) {
 					cv.clear();
 					conn.beginTransaction();
 					for (List<String> val : o.initvalues) {
-						for (int i = 0; i < o.columns.size(); i++) {
-							cv.put(o.columns.get(i).name, val.get(i));
+						for (int i = 1; i < o.columns.size(); i++) { // i == 0
+																		// for
+																		// ROWID
+							cv.put(o.columns.get(i).name, val.get(i - 1));
 						}
-						conn.insertOrThrow(o.tablename, null, cv);
+						conn.insertOrThrow(o.tableName, null, cv);
 					}
 					conn.setTransactionSuccessful();
 					conn.endTransaction();
@@ -358,22 +371,26 @@ public class G {
 				c.close();
 			} else {
 				s = "SELECT sql FROM sqlite_master WHERE type='table' AND name=?";
-				String[] param = { o.tablename };
+				String[] param = { o.tableName };
 				c = conn.rawQuery(s, param);
 				c.moveToFirst();
 				String ss = c.getString(0);
 				int i = 0;
 				for (Column col : o.columns) {
-					if ((!ss.contains(col.name + " "))
+					if (o.columns.indexOf(col) == 0) {
+						continue;
+					}
+					if ((col.dbfragment.equals(o))
+							&& (!ss.contains(col.name + " "))
 							&& (!ss.contains(col.name + "]"))
 							&& (!ss.contains(String.format("\"%s\"", col.name)))) {
 						s = String.format("ALTER TABLE %s ADD COLUMN %s %s",
-								o.tablename, col.name, col.type.sql);
+								o.tableName, col.name, col.dataType.sql);
 						conn.execSQL(s);
 						if (o.initvalues != null) {
 							s = String.format(
 									"UPDATE %s SET %s=? WHERE ROWID=?",
-									o.tablename, col.name);
+									o.tableName, col.name);
 							int vi = 0;
 							conn.beginTransaction();
 							for (List<String> iv : o.initvalues) {

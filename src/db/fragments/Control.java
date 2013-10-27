@@ -25,5 +25,6 @@ public interface Control {
 	public void setText(CharSequence text);
 
 	public void setEnabled(boolean b);
-
+	
+	public boolean isChanged();
 }

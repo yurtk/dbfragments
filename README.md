@@ -24,3 +24,6 @@ Documentation
 [Tutorial](doc/tutorial.md)
 
 [API Reference](doc/api/index.html) (not included in repository, but can be easily generated in Eclipse by *'Export...'*->*'Java'*->*'Javadoc'*)
+
+[Changelog](doc/changes.md)
+

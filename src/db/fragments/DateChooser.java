@@ -38,6 +38,7 @@ public class DateChooser extends LinearLayout implements Control {
 	Button button;
 	boolean readonly;
 	Activity activity;
+	private boolean changed = false; 
 
 	private int mYear;
 	private int mMonth;
@@ -74,6 +75,7 @@ public class DateChooser extends LinearLayout implements Control {
 				.append(mYear).append("-")
 				.append(String.format("%02d", mMonth + 1)).append("-")
 				.append(String.format("%02d", mDay)));
+		changed = true;
 	}
 
 	private View.OnClickListener on_click = new View.OnClickListener() {
@@ -94,6 +96,7 @@ public class DateChooser extends LinearLayout implements Control {
 			text = "2000-01-01";
 		}
 		edit.setText(text);
+		changed = false;
 	}
 
 	@SuppressLint("ValidFragment")
@@ -116,6 +119,11 @@ public class DateChooser extends LinearLayout implements Control {
 			mDay = dayOfMonth;
 			updateDisplay();
 		}
+	}
+
+	@Override
+	public boolean isChanged() {
+		return changed;		
 	}
 
 }
